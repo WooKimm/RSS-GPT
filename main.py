@@ -10,6 +10,7 @@ import datetime
 import requests
 from fake_useragent import UserAgent
 #from dateutil.parser import parse
+from zhipuai import ZhipuAI
 
 def fetch_feed(url, log_file):
     feed = None
@@ -137,6 +138,30 @@ def truncate_entries(entries, max_entries):
     return entries
 
 def gpt_summary(query,model,language):
+    if language == "zh":
+        messages = [
+            {"role": "user", "content": query},
+            {"role": "assistant", "content": f"请用中文总结这篇文章，先提取出{keyword_length}个关键词，在同一行内输出，然后换行，用中文在{summary_length}字内写一个包含所有要点的总结，按顺序分要点输出，并按照以下格式输出'<br><br>总结:'，<br>是HTML的换行符，输出时必须保留2个，并且必须在'总结:'二字之前"}
+        ]
+    else:
+        messages = [
+            {"role": "user", "content": query},
+            {"role": "assistant", "content": f"Please summarize this article in {language} language, first extract {keyword_length} keywords, output in the same line, then line break, write a summary containing all the points in {summary_length} words in {language}, output in order by points, and output in the following format '<br><br>Summary:' , <br> is the line break of HTML, 2 must be retained when output, and must be before the word 'Summary:'"}
+        ]
+    client = ZhipuAI(api_key=OPENAI_API_KEY) 
+    response = client.chat.completions.create(
+        model="glm-4",  # 填写需要调用的模型名称
+        messages=[
+            {"role": "user", "content": "作为一名营销专家，请为智谱开放平台创作一个吸引人的slogan"},
+            {"role": "assistant", "content": "当然，为了创作一个吸引人的slogan，请告诉我一些关于您产品的信息"},
+            {"role": "user", "content": "智谱AI开放平台"},
+            {"role": "assistant", "content": "智启未来，谱绘无限一智谱AI，让创新触手可及!"},
+            {"role": "user", "content": "创造一个更精准、吸引人的slogan"}
+        ],
+    )
+    return response.choices[0].message
+
+def gpt_summary_openai(query,model,language):
     if language == "zh":
         messages = [
             {"role": "user", "content": query},
